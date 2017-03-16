@@ -1,0 +1,33 @@
+Servidores Web de Altas Prestaciones
+
+Práctica 2
+
+1. He entrado como 'root' en ambas máquinas.
+
+
+2. En la primera máquina he editado el fichero /etc/ssh/sshd_config y he cambiado el parámetro 'PermitRootLogin' a 'yes' para poder acceder mediante ssh siendo root. 
+
+Seguidamente he reiniciado el servicio con la siguiente orden para que los cambios se hagan efectivos:
+
+service ssh restart
+
+
+3. He ejecutado la orden del rsync en la segunda máquina:
+
+rsync -avz -e ssh root@10.0.2.5:/var/www/ /var/www/
+
+
+4. En la segunda máquina he generado las claves con el comando 'ssh-keygen' dejando los campos que nos solicita en blanco.
+
+
+5. He copiado las claves de la segunda máquina en la primera con la siguiente orden:
+
+ssh-copy-id root@10.0.2.5
+
+
+6. He comprobado que podía conectarme por medio de ssh desde la máquina 2 a la 1 sin introducir la contraseña.
+
+
+7. He editado el fichero /etc/crontab en la segunda máquina añadiendo la siguiente línea para que se sincronicen los archivos automáticamente cada minuto:
+
+* * * * * root rsync -avz -e ssh root@10.0.2.5:/var/www/ /var/www/

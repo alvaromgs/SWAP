@@ -1,0 +1,55 @@
+Servidores Web de Altas Prestaciones
+
+Práctica 4
+
+1. En la máquina 1 he generado el certificado autofirmado ejecutando las órdenes indicadas en el guión:
+
+a2enmod ssl
+service apache2 restart
+mkdir /etc/apache2/ssl
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/apache2/ssl/apache.key -out /etc/apache2/ssl/apache.crt
+
+Posteriormente he incluido los datos requeridos como el código del país o el nombre de la organización.
+
+2. He editado el archivo /etc/apache2/sites-available/default-ssl.conf añadiendo estas dos líneas debajo de SSLEngine on:
+ 
+SSLCertificateFile /etc/apache2/ssl/apache.crt
+SSLCertificateKeyFile /etc/apache2/ssl/apache.key
+
+3. He activado el sitio default-ssl y reiniciado apache con:
+
+a2ensite default-ssl
+service apache2 reload
+
+4. He accedido con el navegador Firefox desde otra máquina virtual situada en la misma red a la IP de la máquina en la que he instalado el certificado y he comprobado que funciona ya que aparece como 'Conexión segura'.
+
+5. En el balanceador he configurado el cortafuegos siguiendo los pasos del guión.
+
+Eliminando todas las reglas:
+
+iptables -F
+iptables -X
+iptables -Z
+iptables -t nat -F
+
+Denegando todo el tráfico:
+
+iptables -P INPUT DROP
+iptables -P OUTPUT DROP
+iptables -P FORWARD DROP
+
+Permitir acceso desde localhost:
+
+iptables -A INPUT -i lo -j ACCEPT
+iptables -A OUTPUT -o lo -j ACCEPT
+
+Por último, abrir los puertos 22, 80 y 443 con la opción multipuerto para ssh, HTTP y HTTPS:
+
+iptables -A INPUT -i enp0s3 -p tcp -m multiport --dports 22,80,443 -m state --state NEW,ESTABLISHED -j ACCEPT
+iptables -A OUTPUT -o enp0s3 -p tcp -m multiport --sports 22,80,443 -m state --state ESTABLISHED -j ACCEPT
+
+6. He comprobado que se han abierto correctamente con el siguiente comando:
+
+iptables -L -n -v
+
+

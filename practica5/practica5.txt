@@ -1,0 +1,116 @@
+Servidores Web de Altas Prestaciones
+
+Práctica 5
+
+1. He entrado en MySQL como root con la orden indicada en el guión e introduciendo la contraseña: 
+
+mysql -u root -p
+
+2. Una vez dentro he creado la base de datos "contactos" y siguiendo los comandos del guión he creado una tabla que incluye el nombre y el teléfono del contacto:
+
+mysql> create database contactos;
+
+mysql> use contactos;
+
+mysql> create table datos(nombre varchar(100),tlf int);
+
+mysql> insert into datos(nombre,tlf) values ("pepe",95834987);
+
+3. He comprobado que los datos se han incluido en la tabla correctamente y además he he realizado una consulta con las siguientes ordenes:
+
+mysql> select * from datos;
+
+mysql> describe datos;
+
+4. Desactivo la opción de que los datos se estén actualizando continuamente para realizar el volcado de la BD a un fichero .sql. Para ello ejecuto la siguiente orden:
+
+mysql> FLUSH TABLES WITH READ LOCK;
+
+5. Salgo de MySQL y realizo el volcado de la BD creada anteriormente con mysqldump:
+
+mysqldump contactos -u root -p > /root/contactos.sql
+
+6. Vuelvo a entrar en MySQL como root y desactivo el LOCK de las tablas:
+
+mysql> UNLOCK TABLES;
+
+7. Desde la máquina 2 ejecuto la siguiente orden para copiar el archivo .sql que acabamos de generar:
+
+scp root@swap1:/root/contactos.sql /root/
+
+8. Con el archivo .sql en la máquina 2 procedo a crear la BD:
+
+mysql -u root –p
+
+mysql> create database contactos;
+mysql> quit
+
+9. Y a restaurar los datos a partir del fichero .sql:
+
+mysql -u root -p contactos < /root/contactos.sql
+
+10. Para replicar la BD comenzamos por editar en el maestro el fichero de configuración /etc/mysql/mysql.conf.d/mysqld.cnf haciendo los siguientes cambios:
+
+Comentamos la siguiente línea para que escuche a un servidor:
+
+#bind-address 127.0.0.1
+
+Establecemos el identificador del servidor añadiendo la siguiente línea:
+
+server-id = 1
+
+Descomentamos la siguiente línea para que se genere un registro binario de toda la actividad:
+
+log_bin = /var/log/mysql/mysql-bin.log
+
+11. Una vez guardados los cambios reiniciamos el servicio con:
+
+/etc/init.d/mysql restart
+
+12. Procedemos a configurar el esclavo haciendo los mismos cambios excepto en la siguiente línea:
+
+server-id = 2
+
+13. Nuevamente guardamos los cambios y reiniciamos el servicio:
+
+/etc/init.d/mysql restart
+
+14. En la máquina maestro entramos en MySQL y ejecutamos las siguientes ordenes para crear un usuario 'esclavo':
+
+mysql> CREATE USER esclavo IDENTIFIED BY 'esclavo';
+
+mysql> GRANT REPLICATION SLAVE ON *.* TO 'esclavo'@'%' IDENTIFIED BY 'esclavo';
+
+mysql> FLUSH PRIVILEGES;
+
+mysql> FLUSH TABLES;
+
+mysql> FLUSH TABLES WITH READ LOCK;
+
+mysql> SHOW MASTER STATUS;
+
+15. Una vez anotados el fichero de log y la posición del maestro, en la máquina esclavo entramos en MySQL y ejecutamos la siguiente orden para proporcionarle los datos del maestro:
+
+mysql> CHANGE MASTER TO MASTER_HOST='10.0.2.5', MASTER_USER='esclavo', MASTER_PASSWORD='esclavo', MASTER_LOG_FILE='mysql-bin.000001', MASTER_LOG_POS=154, MASTER_PORT=3306;
+
+Siendo 10.0.2.5 la IP de nuestra máquina maestro. Arrancamos el esclavo con:
+
+mysql> START SLAVE;
+
+16. En la máquina maestro volvemos a activar las tablas con:
+
+mysql> UNLOCK TABLES;
+
+17. Para comprobar que el replicado está funcionando en el esclavo ejecutamos:
+
+mysql> SHOW SLAVE STATUS\G
+
+Y comprobamos que el campo Seconds_Behind_Master es distinto de 'null'. En este caso vale '0' por lo tanto podemos asumir que la configuración Maestro-Esclavo se ha realizado correctamente.
+
+
+
+
+
+
+
+

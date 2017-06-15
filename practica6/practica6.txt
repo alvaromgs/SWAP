@@ -1,0 +1,52 @@
+Servidores Web de Altas Prestaciones
+
+Práctica 6
+
+1. Con el software de virtualización que estoy utilizando (VirtualBox), he añadido dos discos duros del mismo tamaño (102.56MB) a una de las máquinas virtuales ya instaladas y configuradas en las prácticas de la asignatura.
+
+2. Como ya contaba con la herramienta mdadm instalada he pasado directamente a crear el RAID1 a partir de los dos discos añadidos previamente (sdb y sdc) con la siguiente orden:
+
+sudo mdadm -C /dev/md0 --level=raid1 --raid-devices=2 /dev/sdb /dev/sdc
+
+3. Le he dado formato al dispositivo RAID con:
+
+sudo mkfs /dev/md0
+
+4. Creo el directorio donde se voy a montar el RAID:
+
+sudo mkdir /dat
+
+5. Y lo monto:
+
+sudo mount /dev/md0 /dat
+
+6. Compruebo que el estado del RAID es el correcto:
+
+sudo mdadm --detail /dev/md0
+
+7. He incluido en el archivo /etc/fstab la línea correspondiente para que se monte el RAID automáticamente cuando arranque el sistema. Para ello he obtenido el UUID con:
+
+ls -l /dev/disk/by-uuid/
+
+8. En mi caso el UUID de md0 es c30a53e0-f319-493b-9efc-0995a7be95a2 por lo que he añadido la siguiente línea al final del fichero /etc/fstab:
+
+UUID=c30a53e0-f319-493b-9efc-0995a7be95a2 /dat ext2 defaults 0 0
+
+9. Simulo un fallo en uno de los discos:
+
+sudo mdadm --manage --set-faulty /dev/md0 /dev/sdb
+
+10. Compruebo que se ha marcado como fallido viendo en el estado del RAID que la columna State del disco sdb pasa a valer "faulty".
+
+11. Retiro el disco que está marcado como fallido:
+
+sudo mdadm --manage --remove /dev/md0 /dev/sdb
+
+12. Compruebo que se ha retirado viendo en el estado del RAID que ha desaparecido la fila del disco sdb y en su lugar aparece otra con State "removed".
+
+13. Y por último lo reemplazo:
+
+sudo mdadm --manage --add /dev/md0 /dev/sdb
+
+14. Y compruebo que se ha añadido correctamente viendo en el estado del RAID que el disco sdb aparece con State "active sync".
+

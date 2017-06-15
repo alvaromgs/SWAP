@@ -4,7 +4,7 @@ Práctica 6
 
 1. Con el software de virtualización que estoy utilizando (VirtualBox), he añadido dos discos duros del mismo tamaño (102.56MB) a una de las máquinas virtuales ya instaladas y configuradas en las prácticas de la asignatura.
 
-2. Como ya contaba con la herramienta mdadm instalada he pasado directamente a crear el RAID1 a partir de los dos discos añadidos previamente (sdb y sdc) con la siguiente orden:
+2. Arranco dicha máquina virtual y como ya contaba con la herramienta mdadm instalada he pasado directamente a crear el RAID1 a partir de los dos discos añadidos previamente (sdb y sdc) con la siguiente orden:
 
 sudo mdadm -C /dev/md0 --level=raid1 --raid-devices=2 /dev/sdb /dev/sdc
 
